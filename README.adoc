@@ -1,6 +1,6 @@
 ---
 tags: [nativescript,angular,typescript,android,ios]
-projects: [link:https://blog.couchbase.com/key-value-operations-in-couchbase-mobile-via-nativescript-and-angular/[Key-Value Operations in Couchbase Mobile via NativeScript and Angular], link:https://blog.couchbase.com/querying-for-couchbase-documents-in-a-nativescript-angular-mobile-application/[Querying for Couchbase Documents in a NativeScript Angular Mobile Application]]
+projects: []
 ---
 :couchbase_version: current
 :toc:
