@@ -1,0 +1,190 @@
+---
+tags: [nativescript,angular,typescript,android,ios]
+projects: []
+---
+:couchbase_version: current
+:toc:
+:project_id: gs-nativescript-angular
+:icons: font
+:source-highlighter: prettify
+
+= Couchbase with NativeScript using Angular
+
+This guide walks you through the process of creating a "hello world" NativeScript mobile application that uses link:https://developer.couchbase.com[Couchbase], link:https://nativescript.org[NativeScript], and link:https://angular.io[Angular].
+
+== What You'll Build
+
+You'll build a mobile application that will run in a simulator on your development machine or on a physical device.
+
+In this demonstration, you'll be interacting with information about people: their name, their address, etc. The Couchbase database will contain only contains people. Each person document will be represented in JSON:
+
+[source,json]
+----
+{"firstName": "Nic", "lastName": "Raboy", "website": "https://www.thepolyglotdeveloper.com"}
+----
+
+== What You'll Need
+
+* 15 minutes
+* link:https://nodejs.org[Node.js] 6 or higher
+* link:https://www.nativescript.org[NativeScript] CLI
+* link:https://developer.android.com/studio/index.html[Android SDK] for Android or link:https://developer.apple.com/xcode/[Xcode] for iOS
+
+== How to Complete This Guide
+
+This guide assumes you have some familiarity with NativeScript, Angular, and mobile development. You should understand at least the basics of TypeScript and the Node Package Manager (NPM).
+
+== Build Setup
+
+You can start from scratch via a Command Prompt or Terminal if you'd like.  Using a Command Prompt or Terminal, execute the following to create a new NativeScript with Angular project:
+
+----
+tns create couchbase-project --ng
+----
+
+There is a Couchbase dependency that must be installed to the project.  This can be installed via Command Prompt or Terminal by executing:
+
+----
+tns plugin add nativescript-couchbase
+----
+
+The above package, like all packages, will be installed to a *node_modules* directory that sits next to the *package.json* file that was created when initializing the project.
+
+== Code
+
+Now that we're starting from a common baseline, let's start writing some code to use Couchbase.
+
+==== Importing the Necessary Dependencies
+
+The Couchbase dependency was downloaded, but not yet included in the project.  Couchbase can be included in any component or service within the project, but for simplicity, we're going to focus on the project's *app/app.component.ts* file.  Couchbase can be included in the project's *app/app.component.ts* file like the following:
+
+[source,javascript]
+----
+import { Couchbase } from "nativescript-couchbase";
+----
+
+==== Creating and Opening a Couchbase Database
+
+Creating and opening a database can be done with as little as one line of code.  Somewhere in your component, preferably in the `constructor` method, include:
+
+[source,javascript]
+----
+let database = new Couchbase("test-database");
+----
+
+If the database does not exist it will be created, then opened, otherwise it will only be opened.
+
+==== Creating New Couchbase Documents
+
+The `database` variable created when opening the database will be used in every other interaction with the database for the given component.  To create a new JSON document, execute the following within your component:
+
+[source,javascript]
+----
+let documentId = database.createDocument({
+    "firstName": "Nic",
+    "lastName": "Raboy",
+    "website": "https://www.thepolyglotdeveloper.com"
+});
+----
+
+As a result of the create, a document id will be automatically generated and returned.
+
+==== Retrieving Couchbase Documents by Id
+
+With a valid document id, a document can be retrieved from the database.  Within the component, use the following:
+
+[source,javascript]
+----
+let person = database.getDocument(documentId);
+----
+
+The resulting `person` variable will be a standard TypeScript object.
+
+==== Querying the Couchbase Database
+
+The id won't always be known so instead it is necessary to query for documents based on property information.  This can be done via a MapReduce view and query.  Within the component, preferably in the `constructor` method, create the following view:
+
+[source,javascript]
+----
+database.createView("people", "1", function(document, emitter) {
+    if(document.firstName && document.lastName) {
+        emitter.emit(document._id, document);
+    }
+});
+----
+
+The view above says that when queried, as long as the documents include a `firstName` and `lastName` property, they will be included in the result set.
+
+To query the view, the following can be done within the component:
+
+[source,javascript]
+----
+let rows = database.executeQuery("people");
+for(let i = 0; i < rows.length; i++) {
+    // console.dump(rows[i]);
+}
+----
+
+The above snippet will query the view and iterate through each document in the result set.
+
+==== Seeing the Code Together
+
+To see all the code together, the project's *app/app.component.ts* file might look something like this:
+
+[source,javascript]
+----
+import { Component } from "@angular/core";
+import { Couchbase } from "nativescript-couchbase";
+
+@Component({
+    selector: "ns-app",
+    templateUrl: "app.component.html",
+})
+export class AppComponent {
+
+    public database: any;
+
+    public constructor() {
+        this.database = new Couchbase("test-database");
+        this.database.createView("people", "1", function(document, emitter) {
+            if(document.firstName && document.lastName) {
+                emitter.emit(document._id, document);
+            }
+        });
+        this.create();
+        this.query();
+    }
+
+    public create() {
+        let documentId = this.database.createDocument({
+            "firstName": "Nic",
+            "lastName": "Raboy",
+            "website": "https://www.thepolyglotdeveloper.com"
+        });
+        let person = this.database.getDocument(documentId);
+        console.dump(person);
+    }
+
+    public query() {
+        let rows = this.database.executeQuery("people");
+        for(let i = 0; i < rows.length; i++) {
+            console.dump(rows[i]);
+        }
+    }
+
+}
+----
+
+== Run
+
+This project can be launched from a Terminal or Command Prompt, just like it was created.  Execute the following:
+
+----
+tns emulate android
+----
+
+The above command will build the project and emulate it in an Android simulator.  Swapping out `android` for `ios` will let you test it in iOS.
+
+== Summary
+
+Congratulations! You've just developed a NativeScript with Angular mobile application that uses Couchbase.
